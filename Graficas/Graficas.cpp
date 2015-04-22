@@ -36,12 +36,13 @@ void changeSize(int w, int h)
 	glViewport(0, 0, w, h);
 }
 
+
+//TODO : Modelado de los enemigos
 void objetoX()
 {
-	// Draw body (a 20x20 spherical mesh of radius 0.75 at height 0.75)
-	glColor3f(0.0, 0.0, 0.0); // set drawing color to white
+	glColor3f(0.0, 0.0, 0.0); 
 	glPushMatrix();
-	glTranslatef(0.0, 0.0, 0.75);
+	glTranslatef(0.0, 0.0, 2.0);
 	glutSolidTeapot(.75);
 	glPopMatrix();
 
@@ -52,28 +53,26 @@ void update(void)
 	if (cameraMove) { // update camera position
 		x += cameraMove * lx * speed;
 		y += cameraMove * ly * speed;
-		// z = cos()*0.2+1; // TODO: cos de Que   
+		z = cos(x+lx+y+ly)*0.05+1; // TODO: cos de Que   
 	}
 	if (cameraMove2){
 		x += cameraMove2 * dx * speed;
 		y += cameraMove2 * dy * speed;
 	}
-	glutPostRedisplay(); // redisplay everything
+	glutPostRedisplay(); 
 }
 
 void renderScene(void)
 {
 	int i, j;
 
-	// Clear color and depth buffers
-	glClearColor(1.0, 1.0, 1.0, 1.0); // sky color is light blue
+
+	glClearColor(1.0, 1.0, 1.0, 1.0); 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Reset transformations
 	glLoadIdentity();
 
-	// Set the camera centered at (x,y,1) and looking along directional
-	// vector (lx, ly, 0), with the z-axis pointing up
+
 	gluLookAt(
 		x, y, 1.0,
 		x + lx, y + ly, z,
@@ -87,7 +86,7 @@ void renderScene(void)
 	glVertex3f(100.0, -100.0, 0.0);
 	glEnd();
 
-	// Dibujar Objetos para referencia
+
 	for (i = -3; i < 3; i++)
 		for (j = -3; j < 3; j++) {
 			glPushMatrix();
@@ -96,7 +95,7 @@ void renderScene(void)
 			glPopMatrix();
 		}
 
-	glutSwapBuffers(); // Make it all visible
+	glutSwapBuffers(); 
 }
 
 
@@ -128,11 +127,11 @@ void teclaNoPresionada(unsigned char key, int x, int y)
 
 void mouseMove(int x, int y)
 {
-	if (isDragging) { // only when dragging
-		// update the change in angle
+	if (isDragging) { 
+
 		deltaAngle = (x - xDragStart) * 0.005;
 
-		// camera's direction is set to angle + deltaAngle
+
 		lx = -sin(angle + deltaAngle);
 		ly = cos(angle + deltaAngle);
 
@@ -146,13 +145,13 @@ void mouseMove(int x, int y)
 void mouseButton(int button, int state, int x, int y)
 {
 	if (button == GLUT_LEFT_BUTTON) {
-		if (state == GLUT_DOWN) { // left mouse button pressed
-			isDragging = 1; // start dragging
-			xDragStart = x; // save x where button first pressed
+		if (state == GLUT_DOWN) {
+			isDragging = 1; 
+			xDragStart = x;
 		}
-		else { /* (state = GLUT_UP) */
-			angle += deltaAngle; // update camera turning angle
-			isDragging = 0; // no longer dragging
+		else { 
+			angle += deltaAngle;
+			isDragging = 0; 
 		}
 	}
 }
@@ -166,7 +165,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(800, 400);
-	glutCreateWindow("OpenGL/GLUT Sampe Program");
+	glutCreateWindow("FPS Graficas Computacionales");
 
 	
 	glutReshapeFunc(changeSize); 
