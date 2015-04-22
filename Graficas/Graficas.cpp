@@ -11,12 +11,12 @@
 float speed = 0.2;
 
 // Posicion y movimiento de la camara
-float x = 0.0, y = -5.0;
+float x = 0.0, y = -5.0, z=1;
 float cameraMove = 0.0;
 float cameraMove2 = 0.0;
 
 // Angulo de la camara
-float lx = 0.0, ly = 1.0; // A donde apunta la camara
+float lx = 0.0, ly = 1.0, lz= 0.0; // A donde apunta la camara
 float dx = 1.0, dy = 0.0;
 float angle = 0.0; // Angulo de rotacion de la camara
 float deltaAngle = 0.0; // Angulo al arrastrar el mouse 
@@ -52,6 +52,7 @@ void update(void)
 	if (cameraMove) { // update camera position
 		x += cameraMove * lx * speed;
 		y += cameraMove * ly * speed;
+		// z = cos()*0.2+1; // TODO: cos de Que   
 	}
 	if (cameraMove2){
 		x += cameraMove2 * dx * speed;
@@ -75,7 +76,7 @@ void renderScene(void)
 	// vector (lx, ly, 0), with the z-axis pointing up
 	gluLookAt(
 		x, y, 1.0,
-		x + lx, y + ly, 1.0,
+		x + lx, y + ly, z,
 		0.0, 0.0, 1.0);
 
 	glColor3f(1.0, 0.0, 0.0);
@@ -134,6 +135,8 @@ void mouseMove(int x, int y)
 		// camera's direction is set to angle + deltaAngle
 		lx = -sin(angle + deltaAngle);
 		ly = cos(angle + deltaAngle);
+
+		lz = -sin(angle + deltaAngle);
 
 		dx = cos(angle + deltaAngle);
 		dy = sin(angle + deltaAngle);
