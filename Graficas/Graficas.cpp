@@ -161,28 +161,28 @@ int main(int argc, char **argv)
 {
 
 
-	// general initializations
+	
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(800, 400);
 	glutCreateWindow("OpenGL/GLUT Sampe Program");
 
-	// register callbacks
-	glutReshapeFunc(changeSize); // window reshape callback
-	glutDisplayFunc(renderScene); // (re)display callback
-	glutIdleFunc(update); // incremental update
-	glutIgnoreKeyRepeat(1); // ignore key repeat when holding key down
-	glutMouseFunc(mouseButton); // process mouse button push/release
-	glutMotionFunc(mouseMove); // process mouse dragging motion
-	glutKeyboardFunc(presionarTeclasTeclado); // process standard key clicks
+	
+	glutReshapeFunc(changeSize); 
+	glutDisplayFunc(renderScene); 
+	glutIdleFunc(update); 
+	glutIgnoreKeyRepeat(1);
+	glutMouseFunc(mouseButton); 
+	glutMotionFunc(mouseMove); 
+	glutKeyboardFunc(presionarTeclasTeclado); 
 	glutKeyboardUpFunc(teclaNoPresionada);
 
-	// OpenGL init
+
 	glEnable(GL_DEPTH_TEST);
 
-	// enter GLUT event processing cycle
+
 	glutMainLoop();
 
-	return 0; // this is just to keep the compiler happy
+	return 0; 
 }
