@@ -15,6 +15,8 @@ float x = 0.0, y = -5.0, z=1;
 float cameraMove = 0.0;
 float cameraMove2 = 0.0;
 
+float rotCamera = 0.0;
+
 // Angulo de la camara
 float lx = 0.0, ly = 1.0; // A donde apunta la camara
 float lz = 0.0;
@@ -51,6 +53,11 @@ void objetoX()
 
 void update()
 {
+	if (rotCamera){
+		deltaAngle += rotCamera;
+		lx = -sin(angle + deltaAngle);
+		ly = cos(angle + deltaAngle);
+	}
 	if (cameraMove) { // update camera position
 		lz+=speed;
 		x += cameraMove * lx * speed;
@@ -107,8 +114,19 @@ void presionarTeclasTeclado(unsigned char key, int xx, int yy)
 	switch (key) {
 	case 'w': cameraMove = 1.0; break;
 	case 's': cameraMove = -1.0; break;
+		/*
+		// Movimiento Lateral
 	case 'a': cameraMove2 = -1.0; break;
 	case 'd': cameraMove2 = 1.0; break;
+	*/
+
+	case 'a':
+		rotCamera = 0.25																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																		;
+		break;
+	case 'd':
+		rotCamera = -0.25;
+		
+		break;
 	case ' ': speed = 0.7;  break;
 	}
 }
@@ -121,8 +139,17 @@ void teclaNoPresionada(unsigned char key, int x, int y)
 	switch (key) {
 	case 'w': cameraMove = 0.0; break;
 	case 's': cameraMove = 0.0; break;
+		/*
+
+		//Movimiento lateral
 	case 'a': cameraMove2 = 0.0; break;
 	case 'd': cameraMove2 = 0.0; break;
+		*/
+	case 'a':
+	case 'd':
+		rotCamera = 0.0;
+
+		break;
 	case ' ': speed = 0.2;  break;
 	}
 }
@@ -159,7 +186,7 @@ void mouseButton(int button, int state, int x, int y)
 int main(int argc, char **argv)
 {
 
-
+	printf("Luis Carlos Ochoa Argüelles\nMiguel Hernandez\nDaniel Ruiz Bustos");
 	
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
