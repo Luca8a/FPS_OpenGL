@@ -16,7 +16,8 @@ float cameraMove = 0.0;
 float cameraMove2 = 0.0;
 
 // Angulo de la camara
-float lx = 0.0, ly = 1.0, lz= 0.0; // A donde apunta la camara
+float lx = 0.0, ly = 1.0; // A donde apunta la camara
+float lz = 0.0;
 float dx = 1.0, dy = 0.0;
 float angle = 0.0; // Angulo de rotacion de la camara
 float deltaAngle = 0.0; // Angulo al arrastrar el mouse 
@@ -48,12 +49,13 @@ void objetoX()
 
 }
 
-void update(void)
+void update()
 {
 	if (cameraMove) { // update camera position
+		lz+=speed;
 		x += cameraMove * lx * speed;
 		y += cameraMove * ly * speed;
-		z = cos(x+lx+y+ly)*0.05+1; // TODO: cos de Que   
+		z = cos(lz)*0.05+1; // TODO: cos de Que   
 	}
 	if (cameraMove2){
 		x += cameraMove2 * dx * speed;
@@ -62,7 +64,7 @@ void update(void)
 	glutPostRedisplay(); 
 }
 
-void renderScene(void)
+void renderScene()
 {
 	int i, j;
 
@@ -134,8 +136,6 @@ void mouseMove(int x, int y)
 
 		lx = -sin(angle + deltaAngle);
 		ly = cos(angle + deltaAngle);
-
-		lz = -sin(angle + deltaAngle);
 
 		dx = cos(angle + deltaAngle);
 		dy = sin(angle + deltaAngle);
