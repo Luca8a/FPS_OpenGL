@@ -54,10 +54,14 @@
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
+      <AdditionalIncludeDirectories>C:\Users\Luck\Documents\Visual Studio 2013\Projects\Graficas\Graficas\soil;C:\Users\Luck\Documents\Visual Studio 2013\Projects\Graficas\Graficas\glm;C:\Users\Luck\Documents\Visual Studio 2013\Projects\Graficas\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Users\Luck\Documents\Visual Studio 2013\Projects\Graficas\Graficas\soil;C:\Users\Luck\Documents\Visual Studio 2013\Projects\Graficas\Graficas\glm;C:\Users\Luck\Documents\Visual Studio 2013\Projects\Graficas\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glut32.lib;FreeImage.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -78,16 +82,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="glm\glm.c" />
+    <ClCompile Include="glm\glmimg.c" />
+    <ClCompile Include="glm\glmimg_devil.c" />
+    <ClCompile Include="glm\glmimg_jpg.c" />
+    <ClCompile Include="glm\glmimg_png.c" />
+    <ClCompile Include="glm\glmimg_sdl.c" />
+    <ClCompile Include="glm\glmimg_sim.c" />
+    <ClCompile Include="glm\glm_util.c" />
     <ClCompile Include="Graficas.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="glut.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="glut32.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="glut32.lib" />
+    <ClCompile Include="image_DXT.c" />
+    <ClCompile Include="image_helper.c" />
+    <ClCompile Include="SOIL.c" />
+    <ClCompile Include="stb_image_aug.c" />
+    <ClCompile Include="targa.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,0 +1,28 @@
+newmtl LaberintoDefinitivo15x15:lambert16SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd UltimoLaberinto_LaberintoDefinitivo15x15.psd
+Ni 1.00
+newmtl LaberintoDefinitivo15x15:lambert17SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd UltimoLaberinto_LaberintoDefinitivo15x15.psd
+Ni 1.00
+newmtl LaberintoDefinitivo15x15:pasted__lambert17SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd UltimoLaberinto_LaberintoDefinitivo15x15.psd
+Ni 1.00
+newmtl lambert2SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd UltimoLaberinto_LaberintoDefinitivo15x15.psd
+Ni 1.00

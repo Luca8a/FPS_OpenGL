@@ -18,20 +18,44 @@
     <ClCompile Include="Graficas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="glut.h">
+    <ClCompile Include="image_DXT.c">
       <Filter>Source Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="glut32.dll">
+    </ClCompile>
+    <ClCompile Include="image_helper.c">
       <Filter>Source Files</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="glut32.lib">
+    </ClCompile>
+    <ClCompile Include="SOIL.c">
       <Filter>Source Files</Filter>
-    </Library>
+    </ClCompile>
+    <ClCompile Include="stb_image_aug.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glm\glm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glm\glm_util.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glm\glmimg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glm\glmimg_devil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glm\glmimg_jpg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glm\glmimg_png.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glm\glmimg_sdl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glm\glmimg_sim.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="targa.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
