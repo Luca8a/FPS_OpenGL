@@ -17,20 +17,21 @@
 #include "glm.h"
 #define BDEBUG true
 #define DEBUG(s) if (BDEBUG) printf (s)
-
+#define CAMINA 0.05
+#define CORRE 0.2
 
 // Tecla ESC Para salir 
 #define ESC 27
 
 //velocidad caminado
-float speed = 0.2;
+float speed = CAMINA;
 
 //Tamaño pantalla 
 float ratio;
 
 
 // Posicion y movimiento de la camara
-float x = 0.0, y = -5.0, z=1;
+float x = 155.0, y = -1.0, z=5.0;
 float cameraMove = 0.0;
 float cameraMove2 = 0.0;
 
@@ -54,7 +55,10 @@ GLMmodel *laberinto;
 //Variables para la colision
 GLint indiceColision, xImagenColision, yImagenColision, colorImagenColision;
 GLubyte *imageColision;
+GLboolean isColision=false;
 
+//Texturas
+GLuint pisoTexId = 0;
 
 //Luz ambiental
 GLfloat ambientColor[] = { .3f, .3f, .3f, 1.0f };
@@ -63,9 +67,41 @@ void Init()
 {
 	int x, y, d;
 	DEBUG("DEBUG:\t Entro a Init\n");
-	imageColision = LoadTGA("laberinto.tga", &x, &y, &d);
-	laberinto = glmReadOBJ("laberinto.obj");
+	imageColision = LoadTGA("laberinto2.tga", &x, &y, &d);
+	imageColision[0];
+	imageColision[250];
+	laberinto = glmReadOBJ("laberinto3.obj");
+	pisoTexId = SOIL_load_OGL_texture("piso.jpg",SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID,SOIL_FLAG_POWER_OF_TWO);
+	glBindTexture(GL_TEXTURE_2D, pisoTexId);
+	glEnable(GL_TEXTURE_2D);
 	DEBUG("DEBUG:\t Salio a Init\n");
+}
+
+
+void colision(float auxX, float auxY){
+	//leer la imagen y hacer la comparación de color 0 para negro y 1 para blanco
+	xImagenColision = (auxX / 316.0F) * 1264.0F;
+	yImagenColision = (auxY / 376.0F)*1504.0F;
+
+	isColision = false;
+	if (xImagenColision >= 0 && xImagenColision<1264.0F && yImagenColision >= 0 && yImagenColision<1504.0F)
+	{
+
+		
+		indiceColision = yImagenColision * 1264.0F * 3 + xImagenColision * 3;
+		//color =imageColision[i];
+		printf("pixel %d %d %d \n", imageColision[indiceColision], imageColision[indiceColision + 1], imageColision[indiceColision + 2]);
+		if (imageColision[indiceColision] != 0){
+			isColision = true;
+			printf("colisiona \n");
+		}
+
+	}
+
+	/*if(imageColision[i]!=0){
+	col=true;
+	}*/
 }
 
 
@@ -93,20 +129,32 @@ void objetoX()
 
 void update()
 {
+
+	float auxX=x, auxY=y,auxZ=z;
 	if (rotCamera){
 		deltaAngle += rotCamera;
 		lx = -sin(angle + deltaAngle);
 		ly = cos(angle + deltaAngle);
 	}
 	if (cameraMove) { // update camera position
-		lz+=speed;
-		x += cameraMove * lx * speed;
-		y += cameraMove * ly * speed;
-		z = cos(lz)*0.05+1; // TODO: cos de Que   
+
+
+			lz += speed;
+			auxX += cameraMove * lx * speed;
+			auxY += cameraMove * ly * speed;
+			auxZ = cos(lz/5)*0.05 + 5; // TODO: cos de Que   
+
 	}
 	if (cameraMove2){
-		x += cameraMove2 * dx * speed;
-		y += cameraMove2 * dy * speed;
+
+		auxX += cameraMove2 * dx * speed;
+		auxY += cameraMove2 * dy * speed;
+	}
+	colision(auxX, auxY);
+	if (!isColision){
+		x = auxX;
+		y = auxY;
+		z = auxZ;
 	}
 	glutPostRedisplay(); 
 }
@@ -116,7 +164,7 @@ void renderScene()
 	int i, j;
 
 
-	glClearColor(1.0, 1.0, 1.0, 1.0); 
+	glClearColor(0.555, 0.555, 0.99900, 1.0); 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
 
@@ -125,20 +173,32 @@ void renderScene()
 
 	//Camara
 	gluLookAt(
-		x, y, 1.0,
+		x, y, 5.0,
 		x + lx, y + ly, z,
 		0.0, 0.0, 1.0);
 	
-	////piso
-	//glColor3f(1.0, 0.0, 0.0);
-	//glBegin(GL_QUADS);
-	//glVertex3f(-100.0, -100.0, 0.0);
-	//glVertex3f(-100.0, 100.0, 0.0);
-	//glVertex3f(100.0, 100.0, 0.0);
-	//glVertex3f(100.0, -100.0, 0.0);
-	//glEnd();
+	//piso
+	glColor3f(1.0, 1.0, 1.0);
+	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, pisoTexId);
+	glBegin(GL_QUADS);
+		glTexCoord2d(0.0, 0.0);
+		glVertex3f(0.0, 0.0, 0.0);
 
-	glColor3f(0.0, 0.0, 0.0);
+		glTexCoord2d(0.0, 1);
+		glVertex3f(0.0, 376.0, 0.0);
+
+		glTexCoord2d(1, 1);
+		glVertex3f(316.0, 376.0, 0.0);
+
+		glTexCoord2d(1.0, 0.0);
+		glVertex3f(316.0, 0.0, 0.0);
+	glEnd();
+
+
+	glEnable(GL_LIGHTING);
+	glColor3f(1.0, 1.0, 1.0);
 	glRotatef(90, 1, 0, 0);
 	glTranslatef(1,0,0);
 	//laberinto
@@ -164,7 +224,7 @@ void presionarTeclasTeclado(unsigned char key, int xx, int yy)
 
 		
 		break;
-	case ' ': speed = 0.7;  break;
+	case ' ': speed = CORRE;  break;
 	}
 }
 
@@ -183,7 +243,7 @@ void teclaNoPresionada(unsigned char key, int x, int y)
 		
 
 		break;
-	case ' ': speed = 0.2;  break;
+	case ' ': speed = CAMINA;  break;
 	}
 }
 
