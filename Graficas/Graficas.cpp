@@ -10,16 +10,23 @@
 #include <math.h> 
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 #include "targa.h"
 #include "SOIL.h"
 #include <iostream>
 #include <vector>
 #include "glm.h"
+
+
+
 #define BDEBUG true
 #define DEBUG(s) if (BDEBUG) printf (s)
-#define CAMINA 0.05
-#define CORRE 0.2
-
+#define CAMINA 0.1
+#define CORRE 0.5
+#define NUM_BALAS 100
+#define VEL_BALAS 0.8
+#define VEL_ENEMIGO 0.2
+#define CANT_ENEMIGOS 3
 // Tecla ESC Para salir 
 #define ESC 27
 
@@ -31,7 +38,7 @@ float ratio;
 
 
 // Posicion y movimiento de la camara
-float x = 155.0, y = -1.0, z=5.0;
+float x = 155.0, y = -1.0, z = 5.0;
 float cameraMove = 0.0;
 float cameraMove2 = 0.0;
 
@@ -55,7 +62,7 @@ GLMmodel *laberinto;
 //Variables para la colision
 GLint indiceColision, xImagenColision, yImagenColision, colorImagenColision;
 GLubyte *imageColision;
-GLboolean isColision=false;
+GLboolean isColision = false;
 
 //Texturas
 GLuint pisoTexId = 0;
@@ -63,22 +70,188 @@ GLuint pisoTexId = 0;
 //Luz ambiental
 GLfloat ambientColor[] = { .3f, .3f, .3f, 1.0f };
 
+
+//Balas
+GLint siguienteBala = 0;
+typedef struct _bala
+{
+	bool isActive = false;
+	float pos[3];
+	float dir[2];
+	float dist = 0;
+}Bala;
+Bala balas[NUM_BALAS];
+GLMmodel *balaModel;
+
+//Enemigo
+GLMmodel *enemigoModel;
+typedef struct _enemigo
+{
+	bool isActive = true;
+	int vida = 3;
+	int dificultad;
+	int ataque;
+	float pos[3];
+	int danio=0;
+	float dir[2];
+}Enemigo;
+Enemigo femuto[CANT_ENEMIGOS];
+
+bool collisionaEnemigo(Enemigo e);
+void iniciaEnemigo(Enemigo *e);
 void Init()
 {
 	int x, y, d;
+	srand(time(NULL));
 	DEBUG("DEBUG:\t Entro a Init\n");
 	imageColision = LoadTGA("laberinto2.tga", &x, &y, &d);
 	imageColision[0];
 	imageColision[250];
 	laberinto = glmReadOBJ("laberinto3.obj");
-	pisoTexId = SOIL_load_OGL_texture("piso.jpg",SOIL_LOAD_AUTO,
-		SOIL_CREATE_NEW_ID,SOIL_FLAG_POWER_OF_TWO);
+	pisoTexId = SOIL_load_OGL_texture("piso.jpg", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
 	glBindTexture(GL_TEXTURE_2D, pisoTexId);
 	glEnable(GL_TEXTURE_2D);
+
+	balaModel = glmReadOBJ("Pistol.obj");
+
+	enemigoModel = glmReadOBJ("Femuto.obj");
+
+	for (int i = 0; i < CANT_ENEMIGOS; i++)
+	{
+		iniciaEnemigo(&femuto[i]);
+	}
+
 	DEBUG("DEBUG:\t Salio a Init\n");
 }
 
+void iniciaEnemigo(Enemigo *e){
+	e->dificultad = rand() % 3 + 1;
+	int randommm = rand();
 
+	e->ataque = rand() % 10 + 1;
+
+	e->pos[0] = rand() % 316;
+	e->pos[1] = rand() % 376;
+	e->danio = 0;
+	
+	while (collisionaEnemigo(*e))
+	{
+		e->pos[0] += 10;
+		if (e->pos[0]>316){
+			e->pos[0] = 10;
+		}
+	}
+
+
+	printf("DEBUG: Pos de enemigo %f %f\n", (e->pos[0]), (e->pos[1]));
+}
+bool collisionaEnemigo(Enemigo e){
+	xImagenColision = (e.pos[0] / 316.0F) * 1264.0F;
+	yImagenColision = (e.pos[1] / 376.0F)*1504.0F;
+	if (xImagenColision >= 0 && xImagenColision < 1264.0F && yImagenColision >= 0 && yImagenColision < 1504.0F)
+	{
+		GLint indiceColision = yImagenColision * 1264.0F * 3 + xImagenColision * 3;
+		if (imageColision[indiceColision] != 0){
+			return true;
+		}
+	}
+	return false;
+
+}
+//Mover Balas y pintarlas
+void actualizaBalas(){
+	for (int i = 0; i < NUM_BALAS; i++)
+	{
+		if (balas[i].isActive){
+			balas[i].pos[0] += (balas[i].dir[0])*VEL_BALAS;
+			balas[i].pos[1] += (balas[i].dir[1])*VEL_BALAS;
+			balas[i].dist += VEL_BALAS;
+			if (balas[i].dist > 10){
+				balas[i].isActive = false;
+				balas[i].dist = 0;
+			}
+			glTranslatef(balas[i].pos[0], balas[i].pos[1], balas[i].pos[2]);
+
+			glmDraw(balaModel, GLM_TEXTURE | GLM_SMOOTH |GLM_MATERIAL);
+			//glutSolidTeapot(0.5);
+
+			glTranslatef(-balas[i].pos[0], -balas[i].pos[1], -balas[i].pos[2]);
+			
+		}
+	}
+}
+
+int checaHit(Enemigo e){
+	int vida = e.danio;
+	for (int i = 0; i < NUM_BALAS; i++)
+	{	
+		if (balas[i].isActive){
+			GLfloat d1, d2, dist;
+			d1 = e.pos[0] - balas[i].pos[0];
+			d2 = e.pos[1] - balas[i].pos[1];
+			dist = sqrtf((d1*d1) + (d2*d2));
+			if (dist <= 15.0f){
+				vida += 1;
+				balas[i].isActive = false;
+			}
+		}
+	}
+	return vida;
+}
+GLfloat calculaDistancia(Enemigo e){
+	GLfloat d1, d2, dist;
+	d1 = e.pos[0] - x;
+	d2 = e.pos[1] - y;
+	dist = sqrtf((d1*d1) + (d2*d2));
+	return dist;
+}
+void actualizaEnemigo(){
+
+
+	for (int i = 0; i < CANT_ENEMIGOS; i++)
+	{
+		femuto[i].danio=checaHit(femuto[i]);
+		if (femuto[i].isActive){
+			if (femuto[i].danio < femuto[i].vida*femuto[i].dificultad){
+				GLfloat dist= calculaDistancia(femuto[i]);
+				
+				if (dist< 400.0){
+					printf("DEBUG dsitancia a enemigo %d, es de %f\n", i, dist);
+					if (dist < 5){
+						printf("Auch");
+						//Desactivar enemigo x segundos 
+					}
+					else{
+						if (collisionaEnemigo(femuto[i])){
+							femuto[i].pos[0] -= ((x - femuto[i].pos[0]) / dist)*VEL_ENEMIGO;
+							femuto[i].pos[1] -= ((y - femuto[i].pos[1]) / dist)*VEL_ENEMIGO;
+						}
+						else{
+						femuto[i].pos[0] += ((x - femuto[i].pos[0]) / dist)*VEL_ENEMIGO*5;
+							femuto[i].pos[1] += ((y - femuto[i].pos[1]) / dist)*VEL_ENEMIGO;
+						}
+					}
+				}
+				glTranslatef(femuto[i].pos[0], 0, -femuto[i].pos[1]);
+				glScalef(0.05, 0.05, 0.05);
+				glmDraw(enemigoModel, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
+				glScalef(1 / 0.05, 1 / 0.05, 1 / 0.05);
+				glTranslatef(-femuto[i].pos[0], 0, +femuto[i].pos[1]);
+			}
+			else
+			{
+				iniciaEnemigo(&femuto[i]);
+			}
+		}
+		
+	}
+	
+
+
+}
+
+//Colision de camara con laberinto
 void colision(float auxX, float auxY){
 	//leer la imagen y hacer la comparación de color 0 para negro y 1 para blanco
 	xImagenColision = (auxX / 316.0F) * 1264.0F;
@@ -91,10 +264,10 @@ void colision(float auxX, float auxY){
 		
 		indiceColision = yImagenColision * 1264.0F * 3 + xImagenColision * 3;
 		//color =imageColision[i];
-		printf("pixel %d %d %d \n", imageColision[indiceColision], imageColision[indiceColision + 1], imageColision[indiceColision + 2]);
+		
 		if (imageColision[indiceColision] != 0){
 			isColision = true;
-			printf("colisiona \n");
+			//printf("colisiona \n");
 		}
 
 	}
@@ -111,7 +284,7 @@ void changeSize(int w, int h)
 	ratio= ((float)w) / ((float)h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(45.0, ratio, 0.1, 100.0);
+	gluPerspective(45.0, ratio, 0.1, 300.0);
 	glMatrixMode(GL_MODELVIEW);
 	glViewport(0, 0, w, h);
 }
@@ -142,7 +315,7 @@ void update()
 			lz += speed;
 			auxX += cameraMove * lx * speed;
 			auxY += cameraMove * ly * speed;
-			auxZ = cos(lz/5)*0.05 + 5; // TODO: cos de Que   
+			auxZ = cos(lz/5)*0.05 + 5;    
 
 	}
 	if (cameraMove2){
@@ -161,7 +334,7 @@ void update()
 
 void renderScene()
 {
-	int i, j;
+	
 
 
 	glClearColor(0.555, 0.555, 0.99900, 1.0); 
@@ -176,7 +349,9 @@ void renderScene()
 		x, y, 5.0,
 		x + lx, y + ly, z,
 		0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
 	
+
 	//piso
 	glColor3f(1.0, 1.0, 1.0);
 	glDisable(GL_LIGHTING);
@@ -196,21 +371,32 @@ void renderScene()
 		glVertex3f(316.0, 0.0, 0.0);
 	glEnd();
 
+	
+	
 
-	glEnable(GL_LIGHTING);
+	actualizaBalas();
+
 	glColor3f(1.0, 1.0, 1.0);
 	glRotatef(90, 1, 0, 0);
+
+	actualizaEnemigo();
+
 	glTranslatef(1,0,0);
+
+
+
 	//laberinto
-	glMatrixMode(GL_MODELVIEW);
-	glEnable(GL_TEXTURE_2D);
+	
+
 	glmDraw(laberinto, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
+	
+
 	
 
 	glutSwapBuffers(); 
 }
 
-
+void dispara();
 void presionarTeclasTeclado(unsigned char key, int xx, int yy)
 {
 	if (key == ESC || key == 'q' || key == 'Q') exit(0);
@@ -221,14 +407,35 @@ void presionarTeclasTeclado(unsigned char key, int xx, int yy)
 		// Movimiento Lateral
 	case 'a': cameraMove2 = -1.0; break;
 	case 'd': cameraMove2 = 1.0; break;
-
-		
-		break;
-	case ' ': speed = CORRE;  break;
+	case ' ': dispara(); break;
+	case '<': speed = CORRE;; break;
 	}
+
 }
 
+/*
+* Disparar balas 
+* Metodo que se llama cuando se presiona espacio 
+*/
+void dispara(){
+	//Activar Bala
+	balas[siguienteBala].isActive = true;
 
+	//Pos Inicial de la bala
+	balas[siguienteBala].pos[0] = x;
+	balas[siguienteBala].pos[1] = y;
+	balas[siguienteBala].pos[2] = z;
+
+	//Dir de la bala
+
+	balas[siguienteBala].dir[0] = lx;
+	balas[siguienteBala].dir[1] = ly;
+
+	siguienteBala++;
+	if (siguienteBala == NUM_BALAS)siguienteBala = 0;
+
+
+}
 
 
 void teclaNoPresionada(unsigned char key, int x, int y)
@@ -240,10 +447,8 @@ void teclaNoPresionada(unsigned char key, int x, int y)
 		//Movimiento lateral
 	case 'a': cameraMove2 = 0.0; break;
 	case 'd': cameraMove2 = 0.0; break;
-		
+	case '<': speed = CAMINA; break;
 
-		break;
-	case ' ': speed = CAMINA;  break;
 	}
 }
 
