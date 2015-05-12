@@ -6,9 +6,12 @@
 #elif __APPLE__
 #include <GLUT/GLUT.h>
 #endif
-
+#include <cstring>
+#include <string.h>
+#include <stdlib.h>
 #include <math.h> 
 #include <stdio.h>
+#include <cstdio>
 #include <math.h>
 #include <time.h>
 #include "targa.h"
@@ -21,12 +24,12 @@
 
 #define BDEBUG true
 #define DEBUG(s) if (BDEBUG) printf (s)
-#define CAMINA 0.1
-#define CORRE 0.5
+#define CAMINA 0.02
+#define CORRE 0.05
 #define NUM_BALAS 100
-#define VEL_BALAS 0.8
-#define VEL_ENEMIGO 0.2
-#define CANT_ENEMIGOS 3
+#define VEL_BALAS 0.08
+#define VEL_ENEMIGO 0.01
+#define CANT_ENEMIGOS 10
 // Tecla ESC Para salir 
 #define ESC 27
 
@@ -35,6 +38,8 @@ float speed = CAMINA;
 
 //Tamaño pantalla 
 float ratio;
+float WindowWidth = 800;
+float WindowHeight = 400;
 
 
 // Posicion y movimiento de la camara
@@ -43,6 +48,8 @@ float cameraMove = 0.0;
 float cameraMove2 = 0.0;
 
 float rotCamera = 0.0;
+int oldTimeSinceStart = 0;
+int deltaTime;
 
 // Angulo de la camara
 float lx = 0.0, ly = 1.0; // A donde apunta la camara
@@ -96,6 +103,11 @@ typedef struct _enemigo
 	float dir[2];
 }Enemigo;
 Enemigo femuto[CANT_ENEMIGOS];
+
+//Puntaje
+int puntaje = 0;
+
+
 
 bool collisionaEnemigo(Enemigo e);
 void iniciaEnemigo(Enemigo *e);
@@ -164,9 +176,9 @@ void actualizaBalas(){
 	for (int i = 0; i < NUM_BALAS; i++)
 	{
 		if (balas[i].isActive){
-			balas[i].pos[0] += (balas[i].dir[0])*VEL_BALAS;
-			balas[i].pos[1] += (balas[i].dir[1])*VEL_BALAS;
-			balas[i].dist += VEL_BALAS;
+			balas[i].pos[0] += (balas[i].dir[0])*VEL_BALAS*deltaTime;
+			balas[i].pos[1] += (balas[i].dir[1])*VEL_BALAS*deltaTime;
+			balas[i].dist += VEL_BALAS*deltaTime;
 			if (balas[i].dist > 10){
 				balas[i].isActive = false;
 				balas[i].dist = 0;
@@ -217,19 +229,19 @@ void actualizaEnemigo(){
 				GLfloat dist= calculaDistancia(femuto[i]);
 				
 				if (dist< 400.0){
-					printf("DEBUG dsitancia a enemigo %d, es de %f\n", i, dist);
+					//printf("DEBUG dsitancia a enemigo %d, es de %f\n", i, dist);
 					if (dist < 5){
 						printf("Auch");
 						//Desactivar enemigo x segundos 
 					}
 					else{
 						if (collisionaEnemigo(femuto[i])){
-							femuto[i].pos[0] -= ((x - femuto[i].pos[0]) / dist)*VEL_ENEMIGO;
-							femuto[i].pos[1] -= ((y - femuto[i].pos[1]) / dist)*VEL_ENEMIGO;
+							femuto[i].pos[0] -= ((x - femuto[i].pos[0]) / dist)*VEL_ENEMIGO*deltaTime;
+							femuto[i].pos[1] -= ((y - femuto[i].pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
 						}
 						else{
-						femuto[i].pos[0] += ((x - femuto[i].pos[0]) / dist)*VEL_ENEMIGO*5;
-							femuto[i].pos[1] += ((y - femuto[i].pos[1]) / dist)*VEL_ENEMIGO;
+							femuto[i].pos[0] += ((x - femuto[i].pos[0]) / dist)*VEL_ENEMIGO * 5 * deltaTime;
+							femuto[i].pos[1] += ((y - femuto[i].pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
 						}
 					}
 				}
@@ -282,6 +294,8 @@ void colision(float auxX, float auxY){
 void changeSize(int w, int h)
 {
 	ratio= ((float)w) / ((float)h);
+	WindowHeight = h;
+	WindowWidth = w;
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45.0, ratio, 0.1, 300.0);
@@ -290,15 +304,6 @@ void changeSize(int w, int h)
 }
 
 
-//TODO : Modelado de los enemigos
-void objetoX()
-{
-	glColor3f(0.0, 0.0, 0.0); 
-	glTranslatef(0.0, 0.0, 2.0);
-	glutSolidTeapot(.75);
-	glPopMatrix();
-
-}
 
 void update()
 {
@@ -312,16 +317,16 @@ void update()
 	if (cameraMove) { // update camera position
 
 
-			lz += speed;
-			auxX += cameraMove * lx * speed;
-			auxY += cameraMove * ly * speed;
+		lz += speed*deltaTime;
+		auxX += cameraMove * lx * speed*deltaTime;
+		auxY += cameraMove * ly * speed*deltaTime;
 			auxZ = cos(lz/5)*0.05 + 5;    
 
 	}
 	if (cameraMove2){
 
-		auxX += cameraMove2 * dx * speed;
-		auxY += cameraMove2 * dy * speed;
+		auxX += cameraMove2 * dx * speed*deltaTime;
+		auxY += cameraMove2 * dy * speed*deltaTime;
 	}
 	colision(auxX, auxY);
 	if (!isColision){
@@ -332,9 +337,37 @@ void update()
 	glutPostRedisplay(); 
 }
 
+//IMPRIMIR TEXTO
+void printtext(int x, int y, char * string)
+{
+	//(x,y) is from the bottom left of the window
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(20, WindowWidth, 0, WindowHeight, -0.5f, 2.0f);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	glPushAttrib(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST);
+	glRasterPos2i(x, y);
+	for (int i = 0; i<strlen(string); i++)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, string[i]);
+	}
+	glPopAttrib();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+}
+
+
 void renderScene()
 {
-	
+	int timeSinceStart = glutGet(GLUT_ELAPSED_TIME);
+	deltaTime = timeSinceStart-oldTimeSinceStart;
+	oldTimeSinceStart = timeSinceStart;
 
 
 	glClearColor(0.555, 0.555, 0.99900, 1.0); 
@@ -343,6 +376,7 @@ void renderScene()
 
 
 	glLoadIdentity();
+
 
 	//Camara
 	gluLookAt(
@@ -390,7 +424,10 @@ void renderScene()
 
 	glmDraw(laberinto, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
 	
-
+	glColor3f(1.0, 1.0, 1.0);
+	char Result[16];
+	sprintf(Result, "Score:%d", puntaje);
+	printtext(WindowWidth - 100, WindowHeight - 50, Result);
 	
 
 	glutSwapBuffers(); 
@@ -490,7 +527,7 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(800, 400);
+	glutInitWindowSize(WindowWidth, WindowHeight);
 	glutCreateWindow("FPS Graficas Computacionales");
 
 	
