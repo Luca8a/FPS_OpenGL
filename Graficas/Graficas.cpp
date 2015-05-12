@@ -29,7 +29,9 @@
 #define NUM_BALAS 100
 #define VEL_BALAS 0.08
 #define VEL_ENEMIGO 0.01
-#define CANT_ENEMIGOS 10
+#define CANT_ENEMIGOS 5
+#define VIDA_INICIAL 20
+
 // Tecla ESC Para salir 
 #define ESC 27
 
@@ -97,15 +99,17 @@ typedef struct _enemigo
 	bool isActive = true;
 	int vida = 3;
 	int dificultad;
-	int ataque;
+	bool ataque=false;
 	float pos[3];
 	int danio=0;
 	float dir[2];
+	int timeAtaque = 0;
 }Enemigo;
 Enemigo femuto[CANT_ENEMIGOS];
 
 //Puntaje
 int puntaje = 0;
+int vida=VIDA_INICIAL;
 
 
 
@@ -141,22 +145,21 @@ void iniciaEnemigo(Enemigo *e){
 	e->dificultad = rand() % 3 + 1;
 	int randommm = rand();
 
-	e->ataque = rand() % 10 + 1;
-
 	e->pos[0] = rand() % 316;
 	e->pos[1] = rand() % 376;
 	e->danio = 0;
-	
+	e->ataque = false;
+	e->isActive = true;
 	while (collisionaEnemigo(*e))
 	{
 		e->pos[0] += 10;
-		if (e->pos[0]>316){
+		if (e->pos[0]>300){
 			e->pos[0] = 10;
 		}
 	}
 
 
-	printf("DEBUG: Pos de enemigo %f %f\n", (e->pos[0]), (e->pos[1]));
+	
 }
 bool collisionaEnemigo(Enemigo e){
 	xImagenColision = (e.pos[0] / 316.0F) * 1264.0F;
@@ -167,6 +170,8 @@ bool collisionaEnemigo(Enemigo e){
 		if (imageColision[indiceColision] != 0){
 			return true;
 		}
+
+
 	}
 	return false;
 
@@ -218,50 +223,112 @@ GLfloat calculaDistancia(Enemigo e){
 	dist = sqrtf((d1*d1) + (d2*d2));
 	return dist;
 }
+void mueveEnemigo(Enemigo *e){
+	GLfloat dist = calculaDistancia(*e);
+	if (dist < 400.0){
+		if (dist < 10){
+			e->ataque = true;
+			e->timeAtaque = glutGet(GLUT_ELAPSED_TIME);
+			vida--;
+		}
+		else
+		{
+			if (collisionaEnemigo(*e)){
+				e->pos[0] -= ((x - e->pos[0]) / dist)*VEL_ENEMIGO*deltaTime;
+				e->pos[1] -= ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
+			}
+			else
+			{
+				e->pos[0] += ((x - e->pos[0]) / dist)*VEL_ENEMIGO * deltaTime;
+				e->pos[1] += ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
+				if (collisionaEnemigo(*e)){
+
+					e->pos[1] -= ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
+					if (collisionaEnemigo(*e)){
+						e->pos[0] -= ((x - e->pos[0]) / dist)*VEL_ENEMIGO * deltaTime;
+						e->pos[1] += ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime * 2;
+
+						if (collisionaEnemigo(*e)){
+							e->pos[0] -= ((x - e->pos[0]) / dist)*VEL_ENEMIGO * deltaTime;
+							e->pos[1] -= ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime * 3;
+
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void dibujaEnemigo(Enemigo e){
+	glTranslatef(e.pos[0], 0, -e.pos[1]);
+	glScalef(0.05, 0.05, 0.05);
+
+	GLfloat alpha = (e.dificultad*e.vida - e.danio )/ (e.dificultad*e.vida);
+	float m = (e.dificultad*e.vida);
+	float vi = m - e.danio;
+	float a = vi /m;
+
+	glColor3f(a,a,a);
+
+	glmDraw(enemigoModel, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
+
+	glScalef(1 / 0.05, 1 / 0.05, 1 / 0.05);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	//Sombra
+
+
+
+	glColor4f(0.2, 0.2, 0.2, 0.5);
+	glScalef(1, 0.005, 1);
+	glutSolidSphere(5, 10, 10);
+	glScalef(1, 1 / 0.005, 1);
+
+	glDisable(GL_BLEND);
+
+	glColor3f(1, 1, 1);
+	glTranslatef(-e.pos[0], 0, +e.pos[1]);
+}
 void actualizaEnemigo(){
 
 
 	for (int i = 0; i < CANT_ENEMIGOS; i++)
 	{
-		femuto[i].danio=checaHit(femuto[i]);
+		femuto[i].danio = checaHit(femuto[i]);
 		if (femuto[i].isActive){
+
+
+
 			if (femuto[i].danio < femuto[i].vida*femuto[i].dificultad){
-				GLfloat dist= calculaDistancia(femuto[i]);
-				
-				if (dist< 400.0){
-					//printf("DEBUG dsitancia a enemigo %d, es de %f\n", i, dist);
-					if (dist < 5){
-						printf("Auch");
-						//Desactivar enemigo x segundos 
-					}
-					else{
-						if (collisionaEnemigo(femuto[i])){
-							femuto[i].pos[0] -= ((x - femuto[i].pos[0]) / dist)*VEL_ENEMIGO*deltaTime;
-							femuto[i].pos[1] -= ((y - femuto[i].pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
-						}
-						else{
-							femuto[i].pos[0] += ((x - femuto[i].pos[0]) / dist)*VEL_ENEMIGO * 5 * deltaTime;
-							femuto[i].pos[1] += ((y - femuto[i].pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
-						}
+				if (femuto[i].ataque){
+					int dTime = glutGet(GLUT_ELAPSED_TIME) - femuto[i].timeAtaque ;
+					if (dTime > 5000){
+						femuto[i].ataque = false;
 					}
 				}
-				glTranslatef(femuto[i].pos[0], 0, -femuto[i].pos[1]);
-				glScalef(0.05, 0.05, 0.05);
-				glmDraw(enemigoModel, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
-				glScalef(1 / 0.05, 1 / 0.05, 1 / 0.05);
-				glTranslatef(-femuto[i].pos[0], 0, +femuto[i].pos[1]);
+				else
+				{
+					mueveEnemigo(&femuto[i]);
+				}
+				dibujaEnemigo(femuto[i]);
+				
 			}
 			else
 			{
+			
+
+
+				puntaje += femuto[i].dificultad;
 				iniciaEnemigo(&femuto[i]);
 			}
 		}
-		
 	}
-	
-
-
 }
+
+
 
 //Colision de camara con laberinto
 void colision(float auxX, float auxY){
@@ -424,10 +491,15 @@ void renderScene()
 
 	glmDraw(laberinto, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
 	
-	glColor3f(1.0, 1.0, 1.0);
-	char Result[16];
-	sprintf(Result, "Score:%d", puntaje);
-	printtext(WindowWidth - 100, WindowHeight - 50, Result);
+	glColor3f(0, 0, 0);
+	char result[16];
+	sprintf(result, "Score:%d", puntaje);
+	printtext(WindowWidth - 100, WindowHeight - 50, result);
+
+	glColor3f(0, 0, 0);
+	char vidas[16];
+	sprintf(vidas, "VIDA:%d", vida);
+	printtext(100,  50, vidas);
 	
 
 	glutSwapBuffers(); 
@@ -436,7 +508,7 @@ void renderScene()
 void dispara();
 void presionarTeclasTeclado(unsigned char key, int xx, int yy)
 {
-	if (key == ESC || key == 'q' || key == 'Q') exit(0);
+	if (key == ESC) exit(0);
 	switch (key) {
 	case 'w': cameraMove = 1.0; break;
 	case 's': cameraMove = -1.0; break;
@@ -444,8 +516,8 @@ void presionarTeclasTeclado(unsigned char key, int xx, int yy)
 		// Movimiento Lateral
 	case 'a': cameraMove2 = -1.0; break;
 	case 'd': cameraMove2 = 1.0; break;
-	case ' ': dispara(); break;
-	case '<': speed = CORRE;; break;
+
+	case ' ': speed = CORRE;; break;
 	}
 
 }
@@ -484,7 +556,7 @@ void teclaNoPresionada(unsigned char key, int x, int y)
 		//Movimiento lateral
 	case 'a': cameraMove2 = 0.0; break;
 	case 'd': cameraMove2 = 0.0; break;
-	case '<': speed = CAMINA; break;
+	case ' ': speed = CAMINA; break;
 
 	}
 }
@@ -506,7 +578,7 @@ void mouseMove(int x, int y)
 
 void mouseButton(int button, int state, int x, int y)
 {
-	if (button == GLUT_LEFT_BUTTON) {
+	if (button == GLUT_RIGHT_BUTTON) {
 		if (state == GLUT_DOWN) {
 			isDragging = 1; 
 			xDragStart = x;
@@ -516,6 +588,12 @@ void mouseButton(int button, int state, int x, int y)
 			isDragging = 0; 
 		}
 	}
+	if (button == GLUT_LEFT_BUTTON){
+		if (state == GLUT_DOWN){
+			 dispara();
+		}
+	}
+
 }
 
 
@@ -530,7 +608,7 @@ int main(int argc, char **argv)
 	glutInitWindowSize(WindowWidth, WindowHeight);
 	glutCreateWindow("FPS Graficas Computacionales");
 
-	
+
 	glutReshapeFunc(changeSize); 
 	glutDisplayFunc(renderScene); 
 	glutIdleFunc(update); 
