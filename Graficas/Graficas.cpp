@@ -21,9 +21,25 @@
 #include "glm.h"
 
 
-
+//DEBUG
 #define BDEBUG true
 #define DEBUG(s) if (BDEBUG) printf (s)
+
+//Estados
+
+#define JUEGO 1
+#define PAUSA 2
+#define GAMEOVER 3
+#define INICIO 4
+#define INICIO2 5
+#define INICIO3 6
+#define INICIO4 7
+#define INSTRUCCIONES 8
+#define ABOUT 9
+
+
+//Configuracion
+
 #define CAMINA 0.02
 #define CORRE 0.05
 #define NUM_BALAS 100
@@ -32,8 +48,15 @@
 #define CANT_ENEMIGOS 5
 #define VIDA_INICIAL 20
 
-// Tecla ESC Para salir 
+
+
+//Control de Estados
+
+int estado = INICIO;
+
+// Teclas 
 #define ESC 27
+#define ENTER 13
 
 //velocidad caminado
 float speed = CAMINA;
@@ -75,6 +98,13 @@ GLboolean isColision = false;
 
 //Texturas
 GLuint pisoTexId = 0;
+GLuint inicio1 = 1;
+GLuint inicio2 = 2;
+GLuint inicio3 = 3;
+GLuint inicio4 = 4;
+GLuint about = 5;
+GLuint pause = 6;
+GLuint inst = 7;
 
 //Luz ambiental
 GLfloat ambientColor[] = { .3f, .3f, .3f, 1.0f };
@@ -124,10 +154,45 @@ void Init()
 	imageColision[0];
 	imageColision[250];
 	laberinto = glmReadOBJ("laberinto3.obj");
+	//Load Textures
 	pisoTexId = SOIL_load_OGL_texture("piso.jpg", SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
 	glBindTexture(GL_TEXTURE_2D, pisoTexId);
+
+	inicio1 = SOIL_load_OGL_texture("PantallaPrinc_1.jpg", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
+	glBindTexture(GL_TEXTURE_2D, inicio1);
+
+	inicio2 = SOIL_load_OGL_texture("PantallaPrinc_2.jpg", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
+	glBindTexture(GL_TEXTURE_2D, inicio2);
+
+	inicio3 = SOIL_load_OGL_texture("PantallaPrinc_3.jpg", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
+	glBindTexture(GL_TEXTURE_2D, inicio3);
+	
+	inicio4 = SOIL_load_OGL_texture("PantallaPrinc_4.jpg", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
+	glBindTexture(GL_TEXTURE_2D, inicio4);
+
+
+	about = SOIL_load_OGL_texture("PantallaAbout.jpg", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
+	glBindTexture(GL_TEXTURE_2D, about);
+
+	pause = SOIL_load_OGL_texture("PantallaPause.jpg", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
+	glBindTexture(GL_TEXTURE_2D, pause);
+
+	inst = SOIL_load_OGL_texture("PantallaInstrucciones.jpg", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
+	glBindTexture(GL_TEXTURE_2D, inst);
+
+
 	glEnable(GL_TEXTURE_2D);
+
+
+
 
 	balaModel = glmReadOBJ("Pistol.obj");
 
@@ -436,8 +501,7 @@ void renderScene()
 	deltaTime = timeSinceStart-oldTimeSinceStart;
 	oldTimeSinceStart = timeSinceStart;
 
-
-	glClearColor(0.555, 0.555, 0.99900, 1.0); 
+	glClearColor(0.555, 0.555, 0.99900, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
 
@@ -451,6 +515,7 @@ void renderScene()
 		x + lx, y + ly, z,
 		0.0, 0.0, 1.0);
 	glMatrixMode(GL_MODELVIEW);
+
 	
 
 	//piso
@@ -459,17 +524,17 @@ void renderScene()
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, pisoTexId);
 	glBegin(GL_QUADS);
-		glTexCoord2d(0.0, 0.0);
-		glVertex3f(0.0, 0.0, 0.0);
+	glTexCoord2d(0.0, 0.0);
+	glVertex3f(0.0, 0.0, 0.0);
 
-		glTexCoord2d(0.0, 1);
-		glVertex3f(0.0, 376.0, 0.0);
+	glTexCoord2d(0.0, 1);
+	glVertex3f(0.0, 376.0, 0.0);
 
-		glTexCoord2d(1, 1);
-		glVertex3f(316.0, 376.0, 0.0);
+	glTexCoord2d(1, 1);
+	glVertex3f(316.0, 376.0, 0.0);
 
-		glTexCoord2d(1.0, 0.0);
-		glVertex3f(316.0, 0.0, 0.0);
+	glTexCoord2d(1.0, 0.0);
+	glVertex3f(316.0, 0.0, 0.0);
 	glEnd();
 
 	
@@ -505,10 +570,183 @@ void renderScene()
 	glutSwapBuffers(); 
 }
 
+void renderInicio(){
+
+
+	glClearColor(0, 0, 0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+
+
+	glLoadIdentity();
+
+
+	//Camara
+	gluLookAt(
+		x, y, 5.0,
+		x + lx, y + ly, z,
+		0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, inicio1);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0.0, 1.0);
+	glVertex3f(154.2, 0.0, 4.6);
+
+
+	glTexCoord2d(0.0, 0.0);
+	glVertex3f(154.2,0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 0.0);
+	glVertex3f(155.8, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 1.0);
+	glVertex3f(155.8, 0.0, 4.6);
+	glEnd();
+	glutSwapBuffers();
+}
+void renderInicio2(){
+
+
+	glClearColor(0, 0, 0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+
+
+	glLoadIdentity();
+
+
+	//Camara
+	gluLookAt(
+		x, y, 5.0,
+		x + lx, y + ly, z,
+		0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, inicio2);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0.0, 1.0);
+	glVertex3f(154.2, 0.0, 4.6);
+
+
+	glTexCoord2d(0.0, 0.0);
+	glVertex3f(154.2, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 0.0);
+	glVertex3f(155.8, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 1.0);
+	glVertex3f(155.8, 0.0, 4.6);
+	glEnd();
+	glutSwapBuffers();
+}
+void renderInicio3(){
+
+
+	glClearColor(0, 0, 0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+
+
+	glLoadIdentity();
+
+
+	//Camara
+	gluLookAt(
+		x, y, 5.0,
+		x + lx, y + ly, z,
+		0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, inicio3);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0.0, 1.0);
+	glVertex3f(154.2, 0.0, 4.6);
+
+
+	glTexCoord2d(0.0, 0.0);
+	glVertex3f(154.2, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 0.0);
+	glVertex3f(155.8, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 1.0);
+	glVertex3f(155.8, 0.0, 4.6);
+	glEnd();
+	glutSwapBuffers();
+}
+void renderInicio4(){
+
+
+	glClearColor(0, 0, 0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+
+
+	glLoadIdentity();
+
+
+	//Camara
+	gluLookAt(
+		x, y, 5.0,
+		x + lx, y + ly, z,
+		0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, inicio4);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0.0, 1.0);
+	glVertex3f(154.2, 0.0, 4.6);
+
+
+	glTexCoord2d(0.0, 0.0);
+	glVertex3f(154.2, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 0.0);
+	glVertex3f(155.8, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 1.0);
+	glVertex3f(155.8, 0.0, 4.6);
+	glEnd();
+	glutSwapBuffers();
+}
+void display(){
+
+	switch (estado){
+	case JUEGO:
+		renderScene();
+		break;
+	case INICIO:
+		renderInicio();
+		break;
+	case INICIO2:
+		renderInicio2();
+		break;
+	case INICIO3:
+		renderInicio3();
+		break;
+	case INICIO4:
+		renderInicio4();
+		break;
+
+	}
+}
 void dispara();
-void presionarTeclasTeclado(unsigned char key, int xx, int yy)
+void presionarTeclasTecladoJuego(unsigned char key, int xx, int yy)
 {
-	if (key == ESC) exit(0);
+	
 	switch (key) {
 	case 'w': cameraMove = 1.0; break;
 	case 's': cameraMove = -1.0; break;
@@ -521,7 +759,43 @@ void presionarTeclasTeclado(unsigned char key, int xx, int yy)
 	}
 
 }
-
+void presionarTeclasTeclado(unsigned char key, int xx, int yy)
+{
+	if (key == ESC) exit(0);
+	switch (estado){
+	case JUEGO:
+		presionarTeclasTecladoJuego(key, xx, yy);
+		break;
+	case INICIO:
+		switch (key) {
+		case 'w': estado = INICIO4; break;
+		case 's': estado = INICIO2; break;
+		case ENTER:estado = JUEGO; break;
+		}
+		break;
+	case INICIO2:
+		switch (key) {
+		case 'w': estado = INICIO; break;
+		case 's': estado = INICIO3; break;
+		case ENTER:estado = INSTRUCCIONES; break;
+		}
+		break;
+	case INICIO3:
+		switch (key) {
+		case 'w': estado = INICIO2; break;
+		case 's': estado = INICIO4; break;
+		case ENTER:estado = ABOUT; break;
+		}
+		break;
+	case INICIO4:
+		switch (key) {
+		case 'w': estado = INICIO3; break;
+		case 's': estado = INICIO; break;
+		case ENTER:exit(0); break;
+		}
+		break;
+	}
+}
 /*
 * Disparar balas 
 * Metodo que se llama cuando se presiona espacio 
@@ -547,7 +821,7 @@ void dispara(){
 }
 
 
-void teclaNoPresionada(unsigned char key, int x, int y)
+void teclaNoPresionadaJuego(unsigned char key, int x, int y)
 {
 	switch (key) {
 	case 'w': cameraMove = 0.0; break;
@@ -561,9 +835,19 @@ void teclaNoPresionada(unsigned char key, int x, int y)
 	}
 }
 
-void mouseMove(int x, int y)
+void teclaNoPresionada(unsigned char key, int x, int y)
 {
-	if (isDragging) { 
+	switch (estado){
+	case JUEGO:
+		teclaNoPresionadaJuego(key, x, y);
+		break;
+
+
+	}
+}
+
+void mouseMoveJuego(int x, int y){
+	if (isDragging) {
 
 		deltaAngle = (x - xDragStart) * 0.005;
 
@@ -575,25 +859,41 @@ void mouseMove(int x, int y)
 		dy = sin(angle + deltaAngle);
 	}
 }
-
-void mouseButton(int button, int state, int x, int y)
+void mouseMove(int x, int y)
 {
+	switch (estado)
+	{
+	case JUEGO:
+		mouseMoveJuego(x, y);
+		break;
+	}
+}
+
+void mouseButtonJuego(int button, int state, int x, int y){
 	if (button == GLUT_RIGHT_BUTTON) {
 		if (state == GLUT_DOWN) {
-			isDragging = 1; 
+			isDragging = 1;
 			xDragStart = x;
 		}
-		else { 
+		else {
 			angle += deltaAngle;
-			isDragging = 0; 
+			isDragging = 0;
 		}
 	}
 	if (button == GLUT_LEFT_BUTTON){
 		if (state == GLUT_DOWN){
-			 dispara();
+			dispara();
 		}
 	}
+}
 
+void mouseButton(int button, int state, int x, int y)
+{
+	switch (estado)
+	{
+	case JUEGO:
+		mouseButtonJuego(button, state, x, y);
+	}
 }
 
 
@@ -610,7 +910,7 @@ int main(int argc, char **argv)
 
 
 	glutReshapeFunc(changeSize); 
-	glutDisplayFunc(renderScene); 
+	glutDisplayFunc(display); 
 	glutIdleFunc(update); 
 	glutIgnoreKeyRepeat(1);
 	glutMouseFunc(mouseButton); 
