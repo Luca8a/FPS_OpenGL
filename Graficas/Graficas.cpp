@@ -36,6 +36,7 @@
 #define INICIO4 7
 #define INSTRUCCIONES 8
 #define ABOUT 9
+#define WINNER 10
 
 
 //Configuracion
@@ -46,7 +47,7 @@
 #define VEL_BALAS 0.08
 #define VEL_ENEMIGO 0.01
 #define CANT_ENEMIGOS 5
-#define VIDA_INICIAL 20
+#define VIDA_INICIAL 1
 
 
 
@@ -108,6 +109,8 @@ GLuint inicio4 = 4;
 GLuint about = 5;
 GLuint pause = 6;
 GLuint inst = 7;
+GLuint gameOver = 8;
+GLuint win = 9;
 
 //Luz ambiental
 GLfloat ambientColor[] = { .3f, .3f, .3f, 1.0f };
@@ -145,12 +148,13 @@ int puntaje = 0;
 int vida=VIDA_INICIAL;
 
 
-
+void iniciaJuego();
 bool collisionaEnemigo(Enemigo e);
 void iniciaEnemigo(Enemigo *e);
 void Init()
 {
 	int x, y, d;
+
 	srand(time(NULL));
 	DEBUG("DEBUG:\t Entro a Init\n");
 	imageColision = LoadTGA("laberinto2.tga", &x, &y, &d);
@@ -192,6 +196,16 @@ void Init()
 	glBindTexture(GL_TEXTURE_2D, inst);
 
 
+	gameOver = SOIL_load_OGL_texture("PantallaGO.jpg", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
+	glBindTexture(GL_TEXTURE_2D, gameOver);
+
+	win = SOIL_load_OGL_texture("PantallaWin.jpg", SOIL_LOAD_AUTO,
+		SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO);
+	glBindTexture(GL_TEXTURE_2D, win);
+
+
+
 	glEnable(GL_TEXTURE_2D);
 
 
@@ -201,14 +215,22 @@ void Init()
 
 	enemigoModel = glmReadOBJ("Femuto.obj");
 
+	iniciaJuego();
+
+	DEBUG("DEBUG:\t Salio a Init\n");
+}
+void iniciaJuego(){
+	x = 155.0, y = -1.0, z = 5.0;
+	puntaje = 0;
+	siguienteBala = 0;
+	vida = VIDA_INICIAL;
+	lx = 0.0, ly = 1.0;  lz = 0.0;
+	rotCamera = 0.0;
 	for (int i = 0; i < CANT_ENEMIGOS; i++)
 	{
 		iniciaEnemigo(&femuto[i]);
 	}
-
-	DEBUG("DEBUG:\t Salio a Init\n");
 }
-
 void iniciaEnemigo(Enemigo *e){
 	e->dificultad = rand() % 3 + 1;
 	int randommm = rand();
@@ -481,6 +503,9 @@ void update()
 			y = auxY;
 			z = auxZ;
 		}
+		if (y>376){
+			estado = WINNER;
+		}
 	}
 		glutPostRedisplay();
 
@@ -581,7 +606,9 @@ void renderScene()
 		char vidas[16];
 		sprintf(vidas, "VIDA:%d", vida);
 		printtext(100, 50, vidas);
-
+		if (vida <= 0){
+			estado = GAMEOVER;
+		}
 
 		glutSwapBuffers();
 	}
@@ -853,6 +880,84 @@ void renderPausa(){
 	glEnd();
 	glutSwapBuffers();
 }
+
+void renderGameO(){
+
+
+	glClearColor(0, 0, 0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+
+
+	glLoadIdentity();
+
+	glColor3f(1, 1, 1);
+	//Camara
+	gluLookAt(
+		xp, yp, 5.0,
+		xp + lxp, yp + lyp, zp,
+		0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, gameOver);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0.0, 1.0);
+	glVertex3f(154.2, 0.0, 4.6);
+
+
+	glTexCoord2d(0.0, 0.0);
+	glVertex3f(154.2, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 0.0);
+	glVertex3f(155.8, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 1.0);
+	glVertex3f(155.8, 0.0, 4.6);
+	glEnd();
+	glutSwapBuffers();
+}
+
+void renderWin(){
+
+
+	glClearColor(0, 0, 0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+
+
+	glLoadIdentity();
+
+	glColor3f(1, 1, 1);
+	//Camara
+	gluLookAt(
+		xp, yp, 5.0,
+		xp + lxp, yp + lyp, zp,
+		0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, win);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0.0, 1.0);
+	glVertex3f(154.2, 0.0, 4.6);
+
+
+	glTexCoord2d(0.0, 0.0);
+	glVertex3f(154.2, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 0.0);
+	glVertex3f(155.8, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 1.0);
+	glVertex3f(155.8, 0.0, 4.6);
+	glEnd();
+	glutSwapBuffers();
+}
 void display(){
 	timeSinceStart = glutGet(GLUT_ELAPSED_TIME);
 	deltaTime = timeSinceStart - oldTimeSinceStart;
@@ -882,6 +987,12 @@ void display(){
 
 	case PAUSA:
 		renderPausa();
+		break;
+	case GAMEOVER:
+		renderGameO();
+		break;
+	case WINNER:
+		renderWin();
 		break;
 		
 	}
@@ -953,6 +1064,7 @@ void presionarTeclasTeclado(unsigned char key, int xx, int yy)
 		case 'L':case'l':case'p':case'P':case ENTER: estado = JUEGO; break;
 		}
 		break;
+	case GAMEOVER: case WINNER:iniciaJuego(); estado = INICIO; break;
 	}
 }
 /*
