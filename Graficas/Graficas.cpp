@@ -69,15 +69,18 @@ float WindowHeight = 400;
 
 // Posicion y movimiento de la camara
 float x = 155.0, y = -1.0, z = 5.0;
+float xp = 155.0, yp = -1.0, zp = 5.0;
 float cameraMove = 0.0;
 float cameraMove2 = 0.0;
 
 float rotCamera = 0.0;
 int oldTimeSinceStart = 0;
 int deltaTime;
+int timeSinceStart = 0;
 
 // Angulo de la camara
 float lx = 0.0, ly = 1.0; // A donde apunta la camara
+float lxp = 0.0, lyp = 1.0;
 float lz = 0.0;
 float dx = 1.0, dy = 0.0;
 float angle = 0.0; // Angulo de rotacion de la camara
@@ -227,57 +230,65 @@ void iniciaEnemigo(Enemigo *e){
 	
 }
 bool collisionaEnemigo(Enemigo e){
-	xImagenColision = (e.pos[0] / 316.0F) * 1264.0F;
-	yImagenColision = (e.pos[1] / 376.0F)*1504.0F;
-	if (xImagenColision >= 0 && xImagenColision < 1264.0F && yImagenColision >= 0 && yImagenColision < 1504.0F)
-	{
-		GLint indiceColision = yImagenColision * 1264.0F * 3 + xImagenColision * 3;
-		if (imageColision[indiceColision] != 0){
-			return true;
+	if (estado == JUEGO){
+		xImagenColision = (e.pos[0] / 316.0F) * 1264.0F;
+		yImagenColision = (e.pos[1] / 376.0F)*1504.0F;
+		if (xImagenColision >= 0 && xImagenColision < 1264.0F && yImagenColision >= 0 && yImagenColision < 1504.0F)
+		{
+			GLint indiceColision = yImagenColision * 1264.0F * 3 + xImagenColision * 3;
+			if (imageColision[indiceColision] != 0){
+				return true;
+			}
+
+
 		}
-
-
 	}
 	return false;
 
 }
 //Mover Balas y pintarlas
 void actualizaBalas(){
-	for (int i = 0; i < NUM_BALAS; i++)
-	{
-		if (balas[i].isActive){
-			balas[i].pos[0] += (balas[i].dir[0])*VEL_BALAS*deltaTime;
-			balas[i].pos[1] += (balas[i].dir[1])*VEL_BALAS*deltaTime;
-			balas[i].dist += VEL_BALAS*deltaTime;
-			if (balas[i].dist > 10){
-				balas[i].isActive = false;
-				balas[i].dist = 0;
+	if (estado == JUEGO){
+		for (int i = 0; i < NUM_BALAS; i++)
+		{
+			if (balas[i].isActive){
+				balas[i].pos[0] += (balas[i].dir[0])*VEL_BALAS*deltaTime;
+				balas[i].pos[1] += (balas[i].dir[1])*VEL_BALAS*deltaTime;
+				balas[i].dist += VEL_BALAS*deltaTime;
+				if (balas[i].dist > 10){
+					balas[i].isActive = false;
+					balas[i].dist = 0;
+				}
+				glTranslatef(balas[i].pos[0], balas[i].pos[1], balas[i].pos[2]);
+
+				glmDraw(balaModel, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
+				//glutSolidTeapot(0.5);
+
+				glTranslatef(-balas[i].pos[0], -balas[i].pos[1], -balas[i].pos[2]);
+
 			}
-			glTranslatef(balas[i].pos[0], balas[i].pos[1], balas[i].pos[2]);
-
-			glmDraw(balaModel, GLM_TEXTURE | GLM_SMOOTH |GLM_MATERIAL);
-			//glutSolidTeapot(0.5);
-
-			glTranslatef(-balas[i].pos[0], -balas[i].pos[1], -balas[i].pos[2]);
-			
 		}
 	}
 }
 
 int checaHit(Enemigo e){
 	int vida = e.danio;
-	for (int i = 0; i < NUM_BALAS; i++)
-	{	
-		if (balas[i].isActive){
-			GLfloat d1, d2, dist;
-			d1 = e.pos[0] - balas[i].pos[0];
-			d2 = e.pos[1] - balas[i].pos[1];
-			dist = sqrtf((d1*d1) + (d2*d2));
-			if (dist <= 15.0f){
-				vida += 1;
-				balas[i].isActive = false;
+	if (estado == JUEGO){
+		
+		for (int i = 0; i < NUM_BALAS; i++)
+		{
+			if (balas[i].isActive){
+				GLfloat d1, d2, dist;
+				d1 = e.pos[0] - balas[i].pos[0];
+				d2 = e.pos[1] - balas[i].pos[1];
+				dist = sqrtf((d1*d1) + (d2*d2));
+				if (dist <= 15.0f){
+					vida += 1;
+					balas[i].isActive = false;
+				}
 			}
 		}
+		
 	}
 	return vida;
 }
@@ -289,34 +300,36 @@ GLfloat calculaDistancia(Enemigo e){
 	return dist;
 }
 void mueveEnemigo(Enemigo *e){
-	GLfloat dist = calculaDistancia(*e);
-	if (dist < 400.0){
-		if (dist < 10){
-			e->ataque = true;
-			e->timeAtaque = glutGet(GLUT_ELAPSED_TIME);
-			vida--;
-		}
-		else
-		{
-			if (collisionaEnemigo(*e)){
-				e->pos[0] -= ((x - e->pos[0]) / dist)*VEL_ENEMIGO*deltaTime;
-				e->pos[1] -= ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
+	if (estado == JUEGO){
+		GLfloat dist = calculaDistancia(*e);
+		if (dist < 400.0){
+			if (dist < 10){
+				e->ataque = true;
+				e->timeAtaque = glutGet(GLUT_ELAPSED_TIME);
+				vida--;
 			}
 			else
 			{
-				e->pos[0] += ((x - e->pos[0]) / dist)*VEL_ENEMIGO * deltaTime;
-				e->pos[1] += ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
 				if (collisionaEnemigo(*e)){
-
+					e->pos[0] -= ((x - e->pos[0]) / dist)*VEL_ENEMIGO*deltaTime;
 					e->pos[1] -= ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
+				}
+				else
+				{
+					e->pos[0] += ((x - e->pos[0]) / dist)*VEL_ENEMIGO * deltaTime;
+					e->pos[1] += ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
 					if (collisionaEnemigo(*e)){
-						e->pos[0] -= ((x - e->pos[0]) / dist)*VEL_ENEMIGO * deltaTime;
-						e->pos[1] += ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime * 2;
 
+						e->pos[1] -= ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime;
 						if (collisionaEnemigo(*e)){
 							e->pos[0] -= ((x - e->pos[0]) / dist)*VEL_ENEMIGO * deltaTime;
-							e->pos[1] -= ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime * 3;
+							e->pos[1] += ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime * 2;
 
+							if (collisionaEnemigo(*e)){
+								e->pos[0] -= ((x - e->pos[0]) / dist)*VEL_ENEMIGO * deltaTime;
+								e->pos[1] -= ((y - e->pos[1]) / dist)*VEL_ENEMIGO*deltaTime * 3;
+
+							}
 						}
 					}
 				}
@@ -359,35 +372,37 @@ void dibujaEnemigo(Enemigo e){
 }
 void actualizaEnemigo(){
 
+	if (estado == JUEGO){
 
-	for (int i = 0; i < CANT_ENEMIGOS; i++)
-	{
-		femuto[i].danio = checaHit(femuto[i]);
-		if (femuto[i].isActive){
+		for (int i = 0; i < CANT_ENEMIGOS; i++)
+		{
+			femuto[i].danio = checaHit(femuto[i]);
+			if (femuto[i].isActive){
 
 
 
-			if (femuto[i].danio < femuto[i].vida*femuto[i].dificultad){
-				if (femuto[i].ataque){
-					int dTime = glutGet(GLUT_ELAPSED_TIME) - femuto[i].timeAtaque ;
-					if (dTime > 5000){
-						femuto[i].ataque = false;
+				if (femuto[i].danio < femuto[i].vida*femuto[i].dificultad){
+					if (femuto[i].ataque){
+						int dTime = glutGet(GLUT_ELAPSED_TIME) - femuto[i].timeAtaque;
+						if (dTime > 5000){
+							femuto[i].ataque = false;
+						}
 					}
+					else
+					{
+						mueveEnemigo(&femuto[i]);
+					}
+					dibujaEnemigo(femuto[i]);
+
 				}
 				else
 				{
-					mueveEnemigo(&femuto[i]);
+
+
+
+					puntaje += femuto[i].dificultad;
+					iniciaEnemigo(&femuto[i]);
 				}
-				dibujaEnemigo(femuto[i]);
-				
-			}
-			else
-			{
-			
-
-
-				puntaje += femuto[i].dificultad;
-				iniciaEnemigo(&femuto[i]);
 			}
 		}
 	}
@@ -439,34 +454,36 @@ void changeSize(int w, int h)
 
 void update()
 {
+	if (estado == JUEGO){
+		float auxX = x, auxY = y, auxZ = z;
+		if (rotCamera){
+			deltaAngle += rotCamera;
+			lx = -sin(angle + deltaAngle);
+			ly = cos(angle + deltaAngle);
+		}
+		if (cameraMove) { // update camera position
 
-	float auxX=x, auxY=y,auxZ=z;
-	if (rotCamera){
-		deltaAngle += rotCamera;
-		lx = -sin(angle + deltaAngle);
-		ly = cos(angle + deltaAngle);
+
+			lz += speed*deltaTime;
+			auxX += cameraMove * lx * speed*deltaTime;
+			auxY += cameraMove * ly * speed*deltaTime;
+			auxZ = cos(lz / 5)*0.05 + 5;
+
+		}
+		if (cameraMove2){
+
+			auxX += cameraMove2 * dx * speed*deltaTime;
+			auxY += cameraMove2 * dy * speed*deltaTime;
+		}
+		colision(auxX, auxY);
+		if (!isColision){
+			x = auxX;
+			y = auxY;
+			z = auxZ;
+		}
 	}
-	if (cameraMove) { // update camera position
+		glutPostRedisplay();
 
-
-		lz += speed*deltaTime;
-		auxX += cameraMove * lx * speed*deltaTime;
-		auxY += cameraMove * ly * speed*deltaTime;
-			auxZ = cos(lz/5)*0.05 + 5;    
-
-	}
-	if (cameraMove2){
-
-		auxX += cameraMove2 * dx * speed*deltaTime;
-		auxY += cameraMove2 * dy * speed*deltaTime;
-	}
-	colision(auxX, auxY);
-	if (!isColision){
-		x = auxX;
-		y = auxY;
-		z = auxZ;
-	}
-	glutPostRedisplay(); 
 }
 
 //IMPRIMIR TEXTO
@@ -497,77 +514,77 @@ void printtext(int x, int y, char * string)
 
 void renderScene()
 {
-	int timeSinceStart = glutGet(GLUT_ELAPSED_TIME);
-	deltaTime = timeSinceStart-oldTimeSinceStart;
-	oldTimeSinceStart = timeSinceStart;
-
-	glClearColor(0.555, 0.555, 0.99900, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+	if (estado==JUEGO){
 
 
-	glLoadIdentity();
+		glClearColor(0.555, 0.555, 0.99900, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
 
 
-	//Camara
-	gluLookAt(
-		x, y, 5.0,
-		x + lx, y + ly, z,
-		0.0, 0.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 
-	
 
-	//piso
-	glColor3f(1.0, 1.0, 1.0);
-	glDisable(GL_LIGHTING);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, pisoTexId);
-	glBegin(GL_QUADS);
-	glTexCoord2d(0.0, 0.0);
-	glVertex3f(0.0, 0.0, 0.0);
-
-	glTexCoord2d(0.0, 1);
-	glVertex3f(0.0, 376.0, 0.0);
-
-	glTexCoord2d(1, 1);
-	glVertex3f(316.0, 376.0, 0.0);
-
-	glTexCoord2d(1.0, 0.0);
-	glVertex3f(316.0, 0.0, 0.0);
-	glEnd();
-
-	
-	
-
-	actualizaBalas();
-
-	glColor3f(1.0, 1.0, 1.0);
-	glRotatef(90, 1, 0, 0);
-
-	actualizaEnemigo();
-
-	glTranslatef(1,0,0);
+		//Camara
+		gluLookAt(
+			x, y, 5.0,
+			x + lx, y + ly, z,
+			0.0, 0.0, 1.0);
+		glMatrixMode(GL_MODELVIEW);
 
 
 
-	//laberinto
-	
+		//piso
+		glColor3f(1.0, 1.0, 1.0);
+		glDisable(GL_LIGHTING);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, pisoTexId);
+		glBegin(GL_QUADS);
+		glTexCoord2d(0.0, 0.0);
+		glVertex3f(0.0, 0.0, 0.0);
 
-	glmDraw(laberinto, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
-	
-	glColor3f(0, 0, 0);
-	char result[16];
-	sprintf(result, "Score:%d", puntaje);
-	printtext(WindowWidth - 100, WindowHeight - 50, result);
+		glTexCoord2d(0.0, 1);
+		glVertex3f(0.0, 376.0, 0.0);
 
-	glColor3f(0, 0, 0);
-	char vidas[16];
-	sprintf(vidas, "VIDA:%d", vida);
-	printtext(100,  50, vidas);
-	
+		glTexCoord2d(1, 1);
+		glVertex3f(316.0, 376.0, 0.0);
 
-	glutSwapBuffers(); 
+		glTexCoord2d(1.0, 0.0);
+		glVertex3f(316.0, 0.0, 0.0);
+		glEnd();
+
+
+
+
+		actualizaBalas();
+
+		glColor3f(1.0, 1.0, 1.0);
+		glRotatef(90, 1, 0, 0);
+
+		actualizaEnemigo();
+
+		glTranslatef(1, 0, 0);
+
+
+
+		//laberinto
+
+
+		glmDraw(laberinto, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
+
+		glColor3f(0, 0, 0);
+		char result[16];
+		sprintf(result, "Score:%d", puntaje);
+		printtext(WindowWidth - 100, WindowHeight - 50, result);
+
+		glColor3f(0, 0, 0);
+		char vidas[16];
+		sprintf(vidas, "VIDA:%d", vida);
+		printtext(100, 50, vidas);
+
+
+		glutSwapBuffers();
+	}
 }
 
 void renderInicio(){
@@ -722,8 +739,124 @@ void renderInicio4(){
 	glEnd();
 	glutSwapBuffers();
 }
-void display(){
+void renderInstr(){
 
+
+	glClearColor(0, 0, 0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+
+
+	glLoadIdentity();
+
+
+	//Camara
+	gluLookAt(
+		x, y, 5.0,
+		x + lx, y + ly, z,
+		0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, inst);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0.0, 1.0);
+	glVertex3f(154.2, 0.0, 4.6);
+
+
+	glTexCoord2d(0.0, 0.0);
+	glVertex3f(154.2, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 0.0);
+	glVertex3f(155.8, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 1.0);
+	glVertex3f(155.8, 0.0, 4.6);
+	glEnd();
+	glutSwapBuffers();
+}
+void renderAbout(){
+
+
+	glClearColor(0, 0, 0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+
+
+	glLoadIdentity();
+
+
+	//Camara
+	gluLookAt(
+		x, y, 5.0,
+		x + lx, y + ly, z,
+		0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, about);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0.0, 1.0);
+	glVertex3f(154.2, 0.0, 4.6);
+
+
+	glTexCoord2d(0.0, 0.0);
+	glVertex3f(154.2, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 0.0);
+	glVertex3f(155.8, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 1.0);
+	glVertex3f(155.8, 0.0, 4.6);
+	glEnd();
+	glutSwapBuffers();
+}
+void renderPausa(){
+
+
+	glClearColor(0, 0, 0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColor);
+
+
+	glLoadIdentity();
+
+	glColor3f(1, 1, 1);
+	//Camara
+	gluLookAt(
+		xp, yp, 5.0,
+		xp + lxp, yp + lyp, zp,
+		0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, pause);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0.0, 1.0);
+	glVertex3f(154.2, 0.0, 4.6);
+
+
+	glTexCoord2d(0.0, 0.0);
+	glVertex3f(154.2, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 0.0);
+	glVertex3f(155.8, 0.0, 5.4);
+
+
+	glTexCoord2d(1.0, 1.0);
+	glVertex3f(155.8, 0.0, 4.6);
+	glEnd();
+	glutSwapBuffers();
+}
+void display(){
+	timeSinceStart = glutGet(GLUT_ELAPSED_TIME);
+	deltaTime = timeSinceStart - oldTimeSinceStart;
+	oldTimeSinceStart = timeSinceStart;
 	switch (estado){
 	case JUEGO:
 		renderScene();
@@ -740,7 +873,17 @@ void display(){
 	case INICIO4:
 		renderInicio4();
 		break;
+	case INSTRUCCIONES:
+		renderInstr();
+		break;
+	case ABOUT:
+		renderAbout();
+		break;
 
+	case PAUSA:
+		renderPausa();
+		break;
+		
 	}
 }
 void dispara();
@@ -755,7 +898,8 @@ void presionarTeclasTecladoJuego(unsigned char key, int xx, int yy)
 	case 'a': cameraMove2 = -1.0; break;
 	case 'd': cameraMove2 = 1.0; break;
 
-	case ' ': speed = CORRE;; break;
+	case ' ': speed = CORRE; break;
+	case 'p': estado = PAUSA; break;
 	}
 
 }
@@ -792,6 +936,21 @@ void presionarTeclasTeclado(unsigned char key, int xx, int yy)
 		case 'w': estado = INICIO3; break;
 		case 's': estado = INICIO; break;
 		case ENTER:exit(0); break;
+		}
+		break;
+	case ABOUT:
+		switch (key) {
+		case 'L':case'l':case ENTER: estado = INICIO3; break;
+		}
+		break;
+	case INSTRUCCIONES:
+		switch (key) {
+		case 'L':case'l':case ENTER: estado = INICIO2; break;
+		}
+		break;
+	case PAUSA:
+		switch (key) {
+		case 'L':case'l':case'p':case'P':case ENTER: estado = JUEGO; break;
 		}
 		break;
 	}
